@@ -1,0 +1,986 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>C Arrays - Interactive Learning PPT</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --primary: #0f172a; --secondary: #1e293b; --accent: #f59e0b;
+            --highlight: #334155; --text: #f1f5f9; --code-bg: #0d1117;
+            --success: #10b981; --warning: #f59e0b; --danger: #ef4444;
+            --info: #3b82f6; --purple: #8b5cf6;
+        }
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: var(--primary); color: var(--text);
+            overflow: hidden; height: 100vh;
+        }
+        .slide-container {
+            width: 100vw; height: 100vh;
+            position: relative; overflow: hidden;
+        }
+        .slide {
+            position: absolute; width: 100%; height: 100%;
+            display: none; padding: 35px 50px;
+            opacity: 0; transition: opacity 0.5s ease;
+            overflow-y: auto;
+        }
+        .slide.active {
+            display: flex; flex-direction: column; opacity: 1;
+        }
+        .progress-bar {
+            position: fixed; top: 0; left: 0; height: 4px;
+            background: linear-gradient(90deg, var(--accent), var(--success), var(--info));
+            transition: width 0.4s ease; z-index: 1001;
+        }
+        .nav-controls {
+            position: fixed; bottom: 25px; left: 50%; transform: translateX(-50%);
+            display: flex; gap: 12px; z-index: 10000;
+            background: rgba(15, 23, 42, 0.95); padding: 12px 25px;
+            border-radius: 50px; backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.1);
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+        }
+        .nav-btn {
+            background: var(--highlight); border: none; color: white;
+            padding: 10px 22px; border-radius: 25px; cursor: pointer;
+            font-size: 14px; transition: all 0.3s; font-weight: 600;
+        }
+        .nav-btn:hover { background: var(--accent); transform: scale(1.05); }
+        .slide-counter {
+            display: flex; align-items: center; color: var(--accent);
+            font-weight: bold; font-size: 15px; padding: 0 15px;
+        }
+        h1 {
+            font-size: 3rem; margin-bottom: 15px;
+            background: linear-gradient(135deg, var(--accent), var(--success));
+            -webkit-background-clip: text; background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-align: center;
+        }
+        h2 {
+            font-size: 2rem; margin-bottom: 18px; color: var(--accent);
+            border-left: 5px solid var(--accent); padding-left: 18px;
+        }
+        h3 { font-size: 1.4rem; color: var(--success); margin: 12px 0 8px; }
+        p, li { font-size: 1.1rem; line-height: 1.7; margin-bottom: 10px; }
+        ul { margin-left: 30px; } li::marker { color: var(--accent); }
+        .code-block {
+            background: var(--code-bg); border: 1px solid #30363d;
+            border-radius: 12px; padding: 18px;
+            font-family: 'Fira Code', 'Courier New', monospace;
+            font-size: 0.95rem; margin: 12px 0; position: relative; overflow-x: auto;
+        }
+        .code-block::before {
+            content: 'C'; position: absolute; top: 10px; right: 15px;
+            background: var(--accent); color: white; padding: 2px 10px;
+            border-radius: 4px; font-size: 0.75rem; font-weight: bold;
+        }
+        .code-line { display: block; padding: 2px 0; }
+        .keyword { color: #ff7b72; } .type { color: #79c0ff; }
+        .variable { color: #ffa657; } .string { color: #a5d6ff; }
+        .number { color: #79c0ff; } .comment { color: #8b949e; font-style: italic; }
+        .operator { color: #ff7b72; } .function { color: #d2a8ff; }
+        .card-grid {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 18px; margin-top: 18px;
+        }
+        .concept-card {
+            background: linear-gradient(145deg, var(--secondary), var(--highlight));
+            border-radius: 14px; padding: 22px;
+            border: 1px solid rgba(255,255,255,0.08);
+            transition: all 0.3s; cursor: pointer;
+        }
+        .concept-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 25px rgba(245, 158, 11, 0.2);
+            border-color: var(--accent);
+        }
+        .concept-card h3 { color: var(--accent); margin-bottom: 10px; font-size: 1.2rem; }
+        .concept-card p { font-size: 0.95rem; color: #cbd5e1; }
+        .array-viz-container {
+            background: var(--code-bg); border-radius: 16px;
+            padding: 22px; margin: 18px 0; border: 2px solid var(--highlight);
+        }
+        .array-controls {
+            display: flex; gap: 10px; margin-bottom: 18px;
+            flex-wrap: wrap; align-items: center;
+        }
+        .control-btn {
+            background: var(--highlight); border: 2px solid var(--accent);
+            color: white; padding: 9px 16px; border-radius: 8px;
+            cursor: pointer; font-size: 0.9rem; transition: all 0.3s; font-weight: 600;
+        }
+        .control-btn:hover { background: var(--accent); transform: translateY(-2px); box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3); }
+        .control-btn.active { background: var(--accent); box-shadow: 0 0 15px rgba(245, 158, 11, 0.5); }
+        .control-input {
+            background: var(--secondary); border: 2px solid var(--highlight);
+            color: white; padding: 9px 14px; border-radius: 8px;
+            font-size: 0.9rem; width: 110px;
+        }
+        .control-input:focus { outline: none; border-color: var(--accent); }
+        .memory-array {
+            display: flex; gap: 0; margin: 18px 0; padding: 25px 18px;
+            background: #1a1a2e; border-radius: 12px;
+            overflow-x: auto; min-height: 160px;
+            align-items: flex-end; justify-content: center; position: relative;
+        }
+        .array-cell {
+            min-width: 85px; height: 95px; border: 3px solid #475569;
+            border-radius: 8px 8px 0 0; display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            transition: all 0.5s ease; position: relative;
+            background: #1e293b; margin: 0 2px;
+        }
+        .array-cell.allocated { border-color: var(--warning); background: rgba(245, 158, 11, 0.1); animation: allocateAnim 0.6s ease; }
+        .array-cell.initialized { border-color: var(--success); background: rgba(16, 185, 129, 0.15); box-shadow: 0 0 20px rgba(16, 185, 129, 0.3); }
+        .array-cell.accessed { border-color: var(--info); background: rgba(59, 130, 246, 0.2); transform: scale(1.1); z-index: 10; box-shadow: 0 0 25px rgba(59, 130, 246, 0.5); }
+        .array-cell.modified { border-color: var(--purple); background: rgba(139, 92, 246, 0.2); animation: modifyPulse 0.8s ease; }
+        @keyframes allocateAnim { 0% { transform: scale(0); opacity: 0; } 60% { transform: scale(1.1); } 100% { transform: scale(1); opacity: 1; } }
+        @keyframes modifyPulse { 0%, 100% { box-shadow: 0 0 5px rgba(139, 92, 246, 0.3); } 50% { box-shadow: 0 0 30px rgba(139, 92, 246, 0.8); } }
+        .cell-index { position: absolute; top: -26px; font-size: 0.8rem; color: var(--accent); font-weight: bold; font-family: monospace; background: var(--secondary); padding: 2px 7px; border-radius: 4px; }
+        .cell-address { font-size: 0.6rem; color: #64748b; margin-bottom: 3px; font-family: monospace; }
+        .cell-value { font-size: 1.3rem; font-weight: bold; color: var(--text); font-family: monospace; }
+        .cell-value.garbage { color: var(--danger); font-size: 0.95rem; }
+        .cell-type { font-size: 0.65rem; color: var(--warning); margin-top: 3px; }
+        .address-bar { display: flex; gap: 0; margin-top: 4px; justify-content: center; padding: 0 18px; }
+        .address-label { min-width: 85px; text-align: center; font-size: 0.65rem; color: #64748b; font-family: monospace; margin: 0 2px; }
+        .explanation-panel {
+            margin-top: 18px; padding: 16px; background: var(--secondary);
+            border-radius: 10px; font-size: 1rem;
+            border-left: 4px solid var(--accent); min-height: 55px;
+        }
+        .legend { display: flex; gap: 20px; margin-top: 12px; font-size: 0.85rem; flex-wrap: wrap; justify-content: center; }
+        .legend-item { display: flex; align-items: center; gap: 5px; }
+        .legend-box { width: 16px; height: 16px; border-radius: 4px; border: 2px solid; }
+        .info-box {
+            background: linear-gradient(135deg, rgba(59,130,246,0.1), rgba(16,185,129,0.1));
+            border-left: 4px solid var(--info); padding: 16px;
+            border-radius: 0 12px 12px 0; margin: 12px 0;
+        }
+        .warning-box {
+            background: linear-gradient(135deg, rgba(245,158,11,0.1), rgba(239,68,68,0.1));
+            border-left: 4px solid var(--warning); padding: 16px;
+            border-radius: 0 12px 12px 0; margin: 12px 0;
+        }
+        .danger-box {
+            background: linear-gradient(135deg, rgba(239,68,68,0.1), rgba(245,158,11,0.1));
+            border-left: 4px solid var(--danger); padding: 16px;
+            border-radius: 0 12px 12px 0; margin: 12px 0;
+        }
+        .comparison-table { width: 100%; border-collapse: collapse; margin: 18px 0; font-size: 0.95rem; }
+        .comparison-table th { background: var(--highlight); padding: 12px; text-align: left; color: var(--accent); font-size: 1.05rem; }
+        .comparison-table td { padding: 12px; border-bottom: 1px solid #334155; }
+        .comparison-table tr:hover td { background: rgba(245, 158, 11, 0.05); }
+        .quiz-option {
+            background: var(--secondary); border: 2px solid var(--highlight);
+            padding: 12px 16px; margin: 6px 0; border-radius: 10px;
+            cursor: pointer; transition: all 0.3s; font-size: 1rem;
+        }
+        .quiz-option:hover { border-color: var(--accent); background: var(--highlight); }
+        .quiz-option.correct { border-color: var(--success); background: rgba(16, 185, 129, 0.15); }
+        .quiz-option.wrong { border-color: var(--danger); background: rgba(239, 68, 68, 0.15); }
+        .title-slide {
+            justify-content: center; align-items: center; text-align: center;
+            background: radial-gradient(circle at center, var(--secondary) 0%, var(--primary) 100%);
+        }
+        .title-slide h1 { font-size: 3.8rem; margin-bottom: 18px; }
+        .subtitle { font-size: 1.5rem; color: #94a3b8; margin-bottom: 35px; }
+        .step-indicator { display: flex; justify-content: center; gap: 7px; margin: 12px 0; }
+        .step-dot { width: 10px; height: 10px; border-radius: 50%; background: #475569; transition: all 0.3s; }
+        .step-dot.active { background: var(--accent); box-shadow: 0 0 10px var(--accent); transform: scale(1.3); }
+        .step-dot.completed { background: var(--success); }
+        .tooltip { position: relative; display: inline-block; border-bottom: 2px dotted var(--accent); cursor: help; }
+        .tooltip:hover::after {
+            content: attr(data-tip); position: absolute; bottom: 125%; left: 50%; transform: translateX(-50%);
+            background: var(--secondary); color: white; padding: 8px 14px; border-radius: 8px;
+            font-size: 0.85rem; white-space: nowrap; z-index: 100;
+            border: 1px solid var(--accent); box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+        }
+        .grid-cell {
+            width: 65px; height: 65px; border: 2px solid var(--highlight); border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.1rem; font-weight: bold; background: var(--secondary);
+            transition: all 0.3s; position: relative;
+        }
+        .grid-cell:hover { border-color: var(--accent); transform: scale(1.1); z-index: 5; }
+        .string-viz { display: flex; gap: 0; margin: 18px 0; justify-content: center; }
+        .char-cell {
+            width: 55px; height: 75px; border: 2px solid var(--accent);
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            background: var(--secondary); margin: 0 1px; position: relative;
+        }
+        .char-cell.null-term { border-color: var(--danger); background: rgba(239, 68, 68, 0.1); }
+        .char-value { font-size: 1.2rem; font-weight: bold; }
+        .char-ascii { font-size: 0.65rem; color: #64748b; margin-top: 2px; }
+        @media (max-width: 768px) {
+            .slide { padding: 18px; } h1 { font-size: 2rem; } h2 { font-size: 1.4rem; }
+            .array-controls { flex-direction: column; align-items: stretch; }
+            .control-input { width: 100%; }
+        }
+    </style>
+<base target="_blank">
+</head>
+<body>
+    <div class="progress-bar" id="progressBar"></div>
+
+    <div class="slide-container">
+
+        
+<!-- SLIDE 1: Custom College Title -->
+<div class="slide active title-slide" data-slide="1">
+    <img src="banner.png" alt="College Logo" style="width:900px;height:auto;margin-bottom:25px;border-radius:10px;">
+    
+    <h1>Topic : Arrays in C</h1>
+<div class="subtitle" style="line-height: 1.8; font-size: 2rem;">
+    <strong>Faculty Name: Ms. M. Pallavi</strong><br>
+    Assistant Professor<br>
+    Department of Computer Science and Engineering (Data Science)<br>
+    Gayatri Vidya Parishad College of Engineering (A)
+</div></div>
+
+
+<!-- SLIDE 2: What is an Array? -->
+        <div class="slide" data-slide="2">
+            <h2>🤔 What is an Array?</h2>
+            <div class="info-box">
+                <strong>Definition:</strong> An array is a <span class="tooltip" data-tip="All elements share the same data type">collection</span> of elements of the <strong>same data type</strong> stored in <strong>contiguous memory locations</strong>.
+            </div>
+            <div class="card-grid">
+                <div class="concept-card">
+                    <h3>🏠 Real-World Analogy</h3>
+                    <p>Think of an array as a <strong>row of lockers</strong> in a school. Each locker has a number (index), they are all the same size, and they are arranged in a straight line.</p>
+                </div>
+                <div class="concept-card">
+                    <h3>💾 Memory Analogy</h3>
+                    <p>Like <strong>hotel rooms in a row</strong> — each room has a room number (index 0, 1, 2...), same size, and you can access any room instantly if you know the number.</p>
+                </div>
+                <div class="concept-card">
+                    <h3>🎯 Why Use Arrays?</h3>
+                    <p>Instead of 100 separate variables (score1, score2...), use <code>scores[100]</code> — organized, efficient, and easy to loop through!</p>
+                </div>
+            </div>
+            <div class="warning-box" style="margin-top: 20px;">
+                <strong>Key Rule:</strong> Array indexing starts at <span style="color: var(--accent); font-size: 1.3rem;"><strong>0</strong></span>, not 1! The first element is at index 0.
+            </div>
+        </div>
+
+        <!-- SLIDE 3: Array Declaration -->
+        <div class="slide" data-slide="3">
+            <h2>📢 Array Declaration</h2>
+            <div class="info-box">
+                <strong>Declaration</strong> tells the compiler: <span style="color: var(--info); font-weight: bold;">"I will use an array of this type and size"</span>. No memory is allocated yet for the array elements.
+            </div>
+            <div class="code-block">
+                <span class="code-line"><span class="comment">// Syntax: data_type array_name[size];</span></span>
+                <span class="code-line"></span>
+                <span class="code-line"><span class="comment">// Declare an array of 5 integers</span></span>
+                <span class="code-line"><span class="type">int</span> <span class="variable">scores</span>[<span class="number">5</span>];        <span class="comment">// Compiler knows: 5 ints coming</span></span>
+                <span class="code-line"></span>
+                <span class="code-line"><span class="comment">// Declare an array of 10 floats</span></span>
+                <span class="code-line"><span class="type">float</span> <span class="variable">prices</span>[<span class="number">10</span>];      <span class="comment">// 10 floats, uninitialized</span></span>
+                <span class="code-line"></span>
+                <span class="code-line"><span class="comment">// Declare a character array (string)</span></span>
+                <span class="code-line"><span class="type">char</span> <span class="variable">name</span>[<span class="number">20</span>];         <span class="comment">// Can hold 19 chars + null terminator</span></span>
+            </div>
+            <h3>Rules for Declaration:</h3>
+            <ul>
+                <li>Size must be a <strong>positive integer constant</strong> (or constant expression)</li>
+                <li>Size cannot be a variable in standard C89 — use dynamic allocation or VLA (C99)</li>
+                <li>Array name follows the same naming rules as variables</li>
+                <li>Type determines how many bytes each element occupies</li>
+            </ul>
+            <div class="danger-box">
+                <strong>Invalid Declarations:</strong><br>
+                <code>int arr[-5];</code> → Negative size<br>
+                <code>int arr[5.5];</code> → Float size<br>
+                <code>int arr[];</code> → Missing size (without initialization)
+            </div>
+        </div>
+
+        <!-- SLIDE 4: Array Definition + Visualizer -->
+        <div class="slide" data-slide="4">
+            <h2>🏗️ Array Definition & Memory Layout</h2>
+            <div class="info-box">
+                <strong>Definition</strong> = Declaration + Memory Allocation. When you write <code>int arr[5];</code>, the compiler allocates <span style="color: var(--warning); font-weight: bold;">5 x 4 = 20 bytes</span> of contiguous memory.
+            </div>
+            <div class="array-viz-container">
+                <div class="array-controls">
+                    <button class="control-btn" onclick="vizDeclare()">1. Declare</button>
+                    <button class="control-btn" onclick="vizDefine()">2. Define (Allocate)</button>
+                    <button class="control-btn" onclick="vizInit()">3. Initialize</button>
+                    <button class="control-btn" onclick="vizAccess()">4. Access Element</button>
+                    <button class="control-btn" onclick="vizModify()">5. Modify Element</button>
+                    <button class="control-btn" onclick="vizReset()" style="border-color: var(--danger);">Reset</button>
+                </div>
+                <div class="step-indicator">
+                    <div class="step-dot" id="vstep1"></div>
+                    <div class="step-dot" id="vstep2"></div>
+                    <div class="step-dot" id="vstep3"></div>
+                    <div class="step-dot" id="vstep4"></div>
+                    <div class="step-dot" id="vstep5"></div>
+                </div>
+                <div style="text-align: center; margin-bottom: 10px; font-size: 1.1rem; color: var(--accent);" id="vizCode">Click a step above to see the array come alive!</div>
+                <div class="memory-array" id="arrayViz"></div>
+                <div class="address-bar" id="addressBar"></div>
+                <div class="legend">
+                    <div class="legend-item"><div class="legend-box" style="border-color: #475569; background: #1e293b;"></div><span>Not Allocated</span></div>
+                    <div class="legend-item"><div class="legend-box" style="border-color: var(--warning); background: rgba(245,158,11,0.1);"></div><span>Allocated (Garbage)</span></div>
+                    <div class="legend-item"><div class="legend-box" style="border-color: var(--success); background: rgba(16,185,129,0.15);"></div><span>Initialized</span></div>
+                    <div class="legend-item"><div class="legend-box" style="border-color: var(--info); background: rgba(59,130,246,0.2);"></div><span>Accessed</span></div>
+                    <div class="legend-item"><div class="legend-box" style="border-color: var(--purple); background: rgba(139,92,246,0.2);"></div><span>Modified</span></div>
+                </div>
+                <div class="explanation-panel" id="vizExplanation">
+                    <strong>Interactive Array Visualizer:</strong> This tool shows exactly what happens in memory when you declare, define, initialize, access, and modify an array. Click the buttons above to step through the process!
+                </div>
+            </div>
+        </div>
+
+        <!-- SLIDE 5: Initialization Methods -->
+        <div class="slide" data-slide="5">
+            <h2>✨ Array Initialization Methods</h2>
+            <div class="info-box">
+                <strong>Initialization</strong> = Giving values to array elements at the time of definition. <span style="color: var(--success); font-weight: bold;">Always initialize arrays!</span> Uninitialized arrays contain garbage values.
+            </div>
+            <div class="card-grid">
+                <div class="concept-card">
+                    <h3>Method 1: All Elements</h3>
+                    <div class="code-block" style="font-size: 0.85rem;">
+                        <span class="code-line"><span class="type">int</span> <span class="variable">arr</span>[<span class="number">5</span>] <span class="operator">=</span> {<span class="number">10</span>, <span class="number">20</span>, <span class="number">30</span>, <span class="number">40</span>, <span class="number">50</span>};</span>
+                    </div>
+                    <p>Explicitly set every element. Size can be inferred if omitted.</p>
+                </div>
+                <div class="concept-card">
+                    <h3>Method 2: Partial Init</h3>
+                    <div class="code-block" style="font-size: 0.85rem;">
+                        <span class="code-line"><span class="type">int</span> <span class="variable">arr</span>[<span class="number">5</span>] <span class="operator">=</span> {<span class="number">10</span>, <span class="number">20</span>};  <span class="comment">// Rest = 0</span></span>
+                    </div>
+                    <p>Remaining elements are automatically set to <strong>0</strong>!</p>
+                </div>
+                <div class="concept-card">
+                    <h3>Method 3: All Zeros</h3>
+                    <div class="code-block" style="font-size: 0.85rem;">
+                        <span class="code-line"><span class="type">int</span> <span class="variable">arr</span>[<span class="number">5</span>] <span class="operator">=</span> {<span class="number">0</span>};      <span class="comment">// All = 0</span></span>
+                    </div>
+                    <p>Single zero initializes entire array to zero. Safest method!</p>
+                </div>
+                <div class="concept-card">
+                    <h3>Method 4: No Size</h3>
+                    <div class="code-block" style="font-size: 0.85rem;">
+                        <span class="code-line"><span class="type">int</span> <span class="variable">arr</span>[] <span class="operator">=</span> {<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>};  <span class="comment">// Size = 3</span></span>
+                    </div>
+                    <p>Compiler counts elements automatically. Size is inferred.</p>
+                </div>
+            </div>
+            <div class="warning-box" style="margin-top: 20px;">
+                <strong>Important:</strong> After declaration, you CANNOT initialize the whole array with <code>arr = {1,2,3};</code> — this only works at definition time! Use a loop or <code>memset()</code> later.
+            </div>
+        </div>
+
+        <!-- SLIDE 6: String Arrays -->
+        <div class="slide" data-slide="6">
+            <h2>🔤 String Arrays (Character Arrays)</h2>
+            <div class="info-box">
+                In C, strings are just <strong>arrays of characters</strong> ending with a special <span class="tooltip" data-tip="ASCII value 0, written as '\0'">null terminator</span> <code>'\0'</code>.
+            </div>
+            <div class="code-block">
+                <span class="code-line"><span class="comment">// Method 1: Character by character (must include null terminator!)</span></span>
+                <span class="code-line"><span class="type">char</span> <span class="variable">str1</span>[<span class="number">6</span>] <span class="operator">=</span> {<span class="string">'H'</span>, <span class="string">'e'</span>, <span class="string">'l'</span>, <span class="string">'l'</span>, <span class="string">'o'</span>, <span class="string">'\0'</span>};</span>
+                <span class="code-line"></span>
+                <span class="code-line"><span class="comment">// Method 2: String literal (compiler adds \0 automatically!)</span></span>
+                <span class="code-line"><span class="type">char</span> <span class="variable">str2</span>[<span class="number">6</span>] <span class="operator">=</span> <span class="string">"Hello"</span>;    <span class="comment">// 5 chars + \0 = 6 bytes</span></span>
+                <span class="code-line"></span>
+                <span class="code-line"><span class="comment">// Method 3: Size inferred (6 bytes allocated)</span></span>
+                <span class="code-line"><span class="type">char</span> <span class="variable">str3</span>[] <span class="operator">=</span> <span class="string">"Hello"</span>;      <span class="comment">// Compiler counts: 5 + 1 = 6</span></span>
+                <span class="code-line"></span>
+                <span class="code-line"><span class="comment">// DANGER: Array too small!</span></span>
+                <span class="code-line"><span class="type">char</span> <span class="variable">str4</span>[<span class="number">5</span>] <span class="operator">=</span> <span class="string">"Hello"</span>;    <span class="comment">// Buffer overflow! Needs 6 bytes!</span></span>
+            </div>
+            <h3>Memory Visualization of <code>char str[] = "Hi";</code></h3>
+            <div class="string-viz">
+                <div class="char-cell"><span style="position:absolute;top:2px;left:4px;font-size:0.55rem;color:#64748b;">[0]</span><span class="char-value">'H'</span><span class="char-ascii">72</span></div>
+                <div class="char-cell"><span style="position:absolute;top:2px;left:4px;font-size:0.55rem;color:#64748b;">[1]</span><span class="char-value">'i'</span><span class="char-ascii">105</span></div>
+                <div class="char-cell null-term"><span style="position:absolute;top:2px;left:4px;font-size:0.55rem;color:#64748b;">[2]</span><span class="char-value">'\0'</span><span class="char-ascii">0</span></div>
+            </div>
+            <p style="text-align: center; color: var(--danger); margin-top: 10px;">
+                The null terminator <code>'\0'</code> is essential! Without it, functions like <code>printf("%s")</code> read past the array into garbage memory!
+            </p>
+            <div class="danger-box">
+                <strong>Buffer Overflow Warning:</strong> Always allocate <strong>size + 1</strong> for strings! <code>char str[5]</code> can only hold 4 characters + <code>'\0'</code>.
+            </div>
+        </div>
+
+        <!-- SLIDE 7: 2D Arrays -->
+        <div class="slide" data-slide="7">
+            <h2>📐 2D Arrays (Matrices)</h2>
+            <div class="info-box">
+                A 2D array is an <strong>array of arrays</strong>. Think of it as a <span class="tooltip" data-tip="Rows x Columns">spreadsheet</span> or a grid with rows and columns.
+            </div>
+            <div class="code-block">
+                <span class="code-line"><span class="comment">// Syntax: data_type array_name[rows][cols];</span></span>
+                <span class="code-line"></span>
+                <span class="code-line"><span class="comment">// Declare a 3x3 matrix</span></span>
+                <span class="code-line"><span class="type">int</span> <span class="variable">matrix</span>[<span class="number">3</span>][<span class="number">3</span>];</span>
+                <span class="code-line"></span>
+                <span class="code-line"><span class="comment">// Initialize with values</span></span>
+                <span class="code-line"><span class="type">int</span> <span class="variable">matrix</span>[<span class="number">3</span>][<span class="number">3</span>] <span class="operator">=</span> {</span>
+                <span class="code-line">    {<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>},   <span class="comment">// Row 0</span></span>
+                <span class="code-line">    {<span class="number">4</span>, <span class="number">5</span>, <span class="number">6</span>},   <span class="comment">// Row 1</span></span>
+                <span class="code-line">    {<span class="number">7</span>, <span class="number">8</span>, <span class="number">9</span>}    <span class="comment">// Row 2</span></span>
+                <span class="code-line">};</span>
+            </div>
+            <h3>Memory Layout (Row-Major Order)</h3>
+            <p style="margin-bottom: 12px;">In memory, 2D arrays are stored as <strong>one continuous block</strong> — row by row:</p>
+            <div style="display: flex; flex-direction: column; align-items: center; gap: 12px; margin: 18px 0;">
+                <div style="font-size: 1.1rem; color: var(--accent); font-weight: bold;">Logical View (Grid)</div>
+                <div style="display: grid; grid-template-columns: repeat(3, 65px); gap: 8px;">
+                    <div class="grid-cell" style="border-color: var(--info);"><span style="position:absolute;top:2px;left:4px;font-size:0.55rem;color:#64748b;">[0][0]</span>1</div>
+                    <div class="grid-cell" style="border-color: var(--info);"><span style="position:absolute;top:2px;left:4px;font-size:0.55rem;color:#64748b;">[0][1]</span>2</div>
+                    <div class="grid-cell" style="border-color: var(--info);"><span style="position:absolute;top:2px;left:4px;font-size:0.55rem;color:#64748b;">[0][2]</span>3</div>
+                    <div class="grid-cell" style="border-color: var(--purple);"><span style="position:absolute;top:2px;left:4px;font-size:0.55rem;color:#64748b;">[1][0]</span>4</div>
+                    <div class="grid-cell" style="border-color: var(--purple);"><span style="position:absolute;top:2px;left:4px;font-size:0.55rem;color:#64748b;">[1][1]</span>5</div>
+                    <div class="grid-cell" style="border-color: var(--purple);"><span style="position:absolute;top:2px;left:4px;font-size:0.55rem;color:#64748b;">[1][2]</span>6</div>
+                    <div class="grid-cell" style="border-color: var(--success);"><span style="position:absolute;top:2px;left:4px;font-size:0.55rem;color:#64748b;">[2][0]</span>7</div>
+                    <div class="grid-cell" style="border-color: var(--success);"><span style="position:absolute;top:2px;left:4px;font-size:0.55rem;color:#64748b;">[2][1]</span>8</div>
+                    <div class="grid-cell" style="border-color: var(--success);"><span style="position:absolute;top:2px;left:4px;font-size:0.55rem;color:#64748b;">[2][2]</span>9</div>
+                </div>
+                <div style="font-size: 1.5rem; color: #64748b;">↓</div>
+                <div style="font-size: 1.1rem; color: var(--accent); font-weight: bold;">Actual Memory (Linear)</div>
+                <div class="memory-array" style="padding: 18px;">
+                    <div class="array-cell initialized" style="min-width: 65px; height: 60px;"><span style="position:absolute;top:-22px;font-size:0.7rem;color:var(--accent);font-weight:bold;font-family:monospace;">[0][0]</span><span style="font-size:1.1rem;font-weight:bold;">1</span></div>
+                    <div class="array-cell initialized" style="min-width: 65px; height: 60px;"><span style="position:absolute;top:-22px;font-size:0.7rem;color:var(--accent);font-weight:bold;font-family:monospace;">[0][1]</span><span style="font-size:1.1rem;font-weight:bold;">2</span></div>
+                    <div class="array-cell initialized" style="min-width: 65px; height: 60px;"><span style="position:absolute;top:-22px;font-size:0.7rem;color:var(--accent);font-weight:bold;font-family:monospace;">[0][2]</span><span style="font-size:1.1rem;font-weight:bold;">3</span></div>
+                    <div class="array-cell initialized" style="min-width: 65px; height: 60px;"><span style="position:absolute;top:-22px;font-size:0.7rem;color:var(--accent);font-weight:bold;font-family:monospace;">[1][0]</span><span style="font-size:1.1rem;font-weight:bold;">4</span></div>
+                    <div class="array-cell initialized" style="min-width: 65px; height: 60px;"><span style="position:absolute;top:-22px;font-size:0.7rem;color:var(--accent);font-weight:bold;font-family:monospace;">[1][1]</span><span style="font-size:1.1rem;font-weight:bold;">5</span></div>
+                    <div class="array-cell initialized" style="min-width: 65px; height: 60px;"><span style="position:absolute;top:-22px;font-size:0.7rem;color:var(--accent);font-weight:bold;font-family:monospace;">[1][2]</span><span style="font-size:1.1rem;font-weight:bold;">6</span></div>
+                    <div class="array-cell initialized" style="min-width: 65px; height: 60px;"><span style="position:absolute;top:-22px;font-size:0.7rem;color:var(--accent);font-weight:bold;font-family:monospace;">[2][0]</span><span style="font-size:1.1rem;font-weight:bold;">7</span></div>
+                    <div class="array-cell initialized" style="min-width: 65px; height: 60px;"><span style="position:absolute;top:-22px;font-size:0.7rem;color:var(--accent);font-weight:bold;font-family:monospace;">[2][1]</span><span style="font-size:1.1rem;font-weight:bold;">8</span></div>
+                    <div class="array-cell initialized" style="min-width: 65px; height: 60px;"><span style="position:absolute;top:-22px;font-size:0.7rem;color:var(--accent);font-weight:bold;font-family:monospace;">[2][2]</span><span style="font-size:1.1rem;font-weight:bold;">9</span></div>
+                </div>
+            </div>
+            <div class="info-box">
+                <strong>Formula:</strong> To access <code>matrix[i][j]</code>, the compiler calculates: <code>base_address + (i x cols + j) x sizeof(type)</code>
+            </div>
+        </div>
+
+        <!-- SLIDE 8: Array Types & Sizes -->
+        <div class="slide" data-slide="8">
+            <h2>📊 Array Types & Sizes</h2>
+            <table class="comparison-table">
+                <tr><th>Array Type</th><th>Declaration Example</th><th>Size Calculation</th><th>Memory (typical)</th></tr>
+                <tr><td>Integer Array</td><td><code>int arr[10]</code></td><td>10 x 4 bytes</td><td>40 bytes</td></tr>
+                <tr><td>Float Array</td><td><code>float arr[10]</code></td><td>10 x 4 bytes</td><td>40 bytes</td></tr>
+                <tr><td>Double Array</td><td><code>double arr[10]</code></td><td>10 x 8 bytes</td><td>80 bytes</td></tr>
+                <tr><td>Character Array</td><td><code>char arr[10]</code></td><td>10 x 1 byte</td><td>10 bytes</td></tr>
+                <tr><td>2D Integer Array</td><td><code>int arr[5][5]</code></td><td>5 x 5 x 4 bytes</td><td>100 bytes</td></tr>
+                <tr><td>String (char array)</td><td><code>char str[20]</code></td><td>20 x 1 byte</td><td>20 bytes (holds 19 chars + '\0')</td></tr>
+            </table>
+            <div class="code-block" style="margin-top: 18px;">
+                <span class="code-line"><span class="comment">// Always use sizeof() for portability!</span></span>
+                <span class="code-line"><span class="type">int</span> <span class="variable">arr</span>[<span class="number">10</span>];</span>
+                <span class="code-line"><span class="function">printf</span>(<span class="string">"Total array size: %zu bytes\n"</span>, <span class="keyword">sizeof</span>(<span class="variable">arr</span>));        <span class="comment">// 40 bytes</span></span>
+                <span class="code-line"><span class="function">printf</span>(<span class="string">"Size of one element: %zu bytes\n"</span>, <span class="keyword">sizeof</span>(<span class="variable">arr</span>[<span class="number">0</span>])); <span class="comment">// 4 bytes</span></span>
+                <span class="code-line"><span class="function">printf</span>(<span class="string">"Number of elements: %zu\n"</span>, <span class="keyword">sizeof</span>(<span class="variable">arr</span>)<span class="operator">/</span><span class="keyword">sizeof</span>(<span class="variable">arr</span>[<span class="number">0</span>])); <span class="comment">// 10</span></span>
+            </div>
+        </div>
+
+        <!-- SLIDE 9: Array Rules -->
+        <div class="slide" data-slide="9">
+            <h2>⚠️ Array Rules & Common Pitfalls</h2>
+            <div class="card-grid">
+                <div class="concept-card" style="border: 1px solid var(--danger);">
+                    <h3 style="color: var(--danger);">🚫 Rule 1: No Bounds Checking</h3>
+                    <p>C does NOT check array bounds! Accessing <code>arr[10]</code> when size is 5 reads/writes <strong>random memory</strong> — undefined behavior!</p>
+                </div>
+                <div class="concept-card">
+                    <h3>📏 Rule 2: Fixed Size</h3>
+                    <p>Standard C arrays have fixed size at compile time. For dynamic sizes, use <strong>malloc()</strong> or VLAs (C99).</p>
+                </div>
+                <div class="concept-card">
+                    <h3>🔄 Rule 3: No Direct Assignment</h3>
+                    <p>You cannot assign one array to another: <code>arr1 = arr2;</code> is <strong>ILLEGAL</strong>! Use a loop or <code>memcpy()</code>.</p>
+                </div>
+                <div class="concept-card">
+                    <h3>📍 Rule 4: Array Name = Pointer</h3>
+                    <p>The array name is essentially the <strong>address of the first element</strong>. <code>arr</code> is same as <code>&arr[0]</code>.</p>
+                </div>
+                <div class="concept-card" style="border: 1px solid var(--warning);">
+                    <h3 style="color: var(--warning);">⚡ Rule 5: sizeof() Trick</h3>
+                    <p><code>sizeof(arr)</code> gives total bytes <strong>only</strong> in the same scope. In a function parameter, it decays to pointer size!</p>
+                </div>
+                <div class="concept-card">
+                    <h3>🧮 Rule 6: Index Starts at 0</h3>
+                    <p>Valid indices: <code>0</code> to <code>size-1</code>. For <code>arr[5]</code>, valid indices are 0,1,2,3,4. Index 5 is <strong>OUT OF BOUNDS</strong>!</p>
+                </div>
+            </div>
+            <div class="danger-box" style="margin-top: 18px;">
+                <strong>Critical Error Example:</strong>
+                <div class="code-block" style="margin-top: 10px; font-size: 0.85rem;">
+                    <span class="code-line"><span class="type">int</span> <span class="variable">arr</span>[<span class="number">5</span>];</span>
+                    <span class="code-line"><span class="keyword">for</span>(<span class="type">int</span> <span class="variable">i</span><span class="operator">=</span><span class="number">0</span>; <span class="variable">i</span><span class="operator">&lt;=</span><span class="number">5</span>; <span class="variable">i</span><span class="operator">++</span>) {  <span class="comment">// BUG: i=5 is out of bounds!</span></span>
+                    <span class="code-line">    <span class="variable">arr</span>[<span class="variable">i</span>] <span class="operator">=</span> <span class="variable">i</span>;              <span class="comment">// Overwrites memory beyond array!</span></span>
+                    <span class="code-line">}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- SLIDE 10: Array Playground -->
+        <div class="slide" data-slide="10">
+            <h2>🎮 Array Playground</h2>
+            <p style="margin-bottom: 12px;">Experiment with different array operations and see memory changes in real-time!</p>
+            <div class="array-viz-container">
+                <div class="array-controls">
+                    <span style="color: var(--accent); font-weight: bold;">Size:</span>
+                    <input type="number" class="control-input" id="playgroundSize" value="5" min="1" max="10" onchange="updatePlayground()">
+                    <span style="color: var(--accent); font-weight: bold;">Type:</span>
+                    <select class="control-input" id="playgroundType" onchange="updatePlayground()" style="width: 90px;">
+                        <option value="int">int</option>
+                        <option value="float">float</option>
+                        <option value="char">char</option>
+                    </select>
+                    <button class="control-btn" onclick="playgroundInit()">Initialize</button>
+                    <button class="control-btn" onclick="playgroundRandom()">Random</button>
+                    <button class="control-btn" onclick="playgroundZero()">All Zeros</button>
+                    <button class="control-btn" onclick="playgroundAccess()">Access [2]</button>
+                    <button class="control-btn" onclick="playgroundModify()">Set [2]=99</button>
+                </div>
+                <div class="memory-array" id="playgroundViz"></div>
+                <div class="address-bar" id="playgroundAddress"></div>
+                <div class="explanation-panel" id="playgroundExplanation">Configure the array above and click buttons to see memory visualization!</div>
+            </div>
+        </div>
+
+        <!-- SLIDE 11: Array vs Pointer -->
+        <div class="slide" data-slide="11">
+            <h2>🔗 Array vs Pointer Relationship</h2>
+            <div class="info-box">
+                In C, <strong>arrays and pointers are closely related</strong> but NOT the same. Understanding this difference is crucial!
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 25px; margin-top: 18px;">
+                <div>
+                    <h3>Array</h3>
+                    <div class="code-block" style="font-size: 0.88rem;">
+                        <span class="code-line"><span class="type">int</span> <span class="variable">arr</span>[<span class="number">5</span>] <span class="operator">=</span> {<span class="number">10</span>, <span class="number">20</span>, <span class="number">30</span>, <span class="number">40</span>, <span class="number">50</span>};</span>
+                        <span class="code-line"></span>
+                        <span class="code-line"><span class="comment">// arr is the array itself</span></span>
+                        <span class="code-line"><span class="function">printf</span>(<span class="string">"%p"</span>, <span class="variable">arr</span>);      <span class="comment">// Address of arr[0]</span></span>
+                        <span class="code-line"><span class="function">printf</span>(<span class="string">"%zu"</span>, <span class="keyword">sizeof</span>(<span class="variable">arr</span>)); <span class="comment">// 20 bytes (5 x 4)</span></span>
+                        <span class="code-line"></span>
+                        <span class="code-line"><span class="comment">// CANNOT do:</span></span>
+                        <span class="code-line"><span class="comment">// arr = arr2;  // ERROR!</span></span>
+                        <span class="code-line"><span class="comment">// arr++;       // ERROR!</span></span>
+                    </div>
+                </div>
+                <div>
+                    <h3>Pointer</h3>
+                    <div class="code-block" style="font-size: 0.88rem;">
+                        <span class="code-line"><span class="type">int</span> <span class="variable">arr</span>[<span class="number">5</span>] <span class="operator">=</span> {<span class="number">10</span>, <span class="number">20</span>, <span class="number">30</span>, <span class="number">40</span>, <span class="number">50</span>};</span>
+                        <span class="code-line"><span class="type">int</span> <span class="operator">*</span><span class="variable">ptr</span> <span class="operator">=</span> <span class="variable">arr</span>;       <span class="comment">// ptr points to arr[0]</span></span>
+                        <span class="code-line"></span>
+                        <span class="code-line"><span class="comment">// ptr is a variable</span></span>
+                        <span class="code-line"><span class="function">printf</span>(<span class="string">"%p"</span>, <span class="variable">ptr</span>);      <span class="comment">// Same address as arr</span></span>
+                        <span class="code-line"><span class="function">printf</span>(<span class="string">"%zu"</span>, <span class="keyword">sizeof</span>(<span class="variable">ptr</span>)); <span class="comment">// 8 bytes (pointer size)</span></span>
+                        <span class="code-line"></span>
+                        <span class="code-line"><span class="comment">// CAN do:</span></span>
+                        <span class="code-line"><span class="variable">ptr</span><span class="operator">++</span>;              <span class="comment">// Moves to next element</span></span>
+                        <span class="code-line"><span class="function">printf</span>(<span class="string">"%d"</span>, <span class="operator">*</span><span class="variable">ptr</span>);    <span class="comment">// 20 (arr[1])</span></span>
+                    </div>
+                </div>
+            </div>
+            <div class="warning-box" style="margin-top: 18px;">
+                <strong>Key Difference:</strong> Array name is a <strong>constant address</strong> (cannot be changed). Pointer is a <strong>variable</strong> that can point to different addresses. <code>arr[i]</code> is exactly equivalent to <code>*(arr + i)</code>.
+            </div>
+        </div>
+
+        <!-- SLIDE 12: Passing Arrays to Functions -->
+        <div class="slide" data-slide="12">
+            <h2>📤 Passing Arrays to Functions</h2>
+            <div class="info-box">
+                When you pass an array to a function, C actually passes a <strong>pointer to the first element</strong>. The array "decays" into a pointer!
+            </div>
+            <div class="code-block">
+                <span class="code-line"><span class="comment">// These function declarations are EQUIVALENT:</span></span>
+                <span class="code-line"><span class="type">void</span> <span class="function">printArray</span>(<span class="type">int</span> <span class="variable">arr</span>[], <span class="type">int</span> <span class="variable">size</span>);     <span class="comment">// Array notation</span></span>
+                <span class="code-line"><span class="type">void</span> <span class="function">printArray</span>(<span class="type">int</span> <span class="operator">*</span><span class="variable">arr</span>, <span class="type">int</span> <span class="variable">size</span>);      <span class="comment">// Pointer notation (same thing!)</span></span>
+                <span class="code-line"></span>
+                <span class="code-line"><span class="comment">// Inside the function:</span></span>
+                <span class="code-line"><span class="type">void</span> <span class="function">printArray</span>(<span class="type">int</span> <span class="variable">arr</span>[], <span class="type">int</span> <span class="variable">size</span>) {</span>
+                <span class="code-line">    <span class="function">printf</span>(<span class="string">"%zu"</span>, <span class="keyword">sizeof</span>(<span class="variable">arr</span>));  <span class="comment">// 8 bytes (pointer size!), NOT array size</span></span>
+                <span class="code-line">    <span class="keyword">for</span>(<span class="type">int</span> <span class="variable">i</span><span class="operator">=</span><span class="number">0</span>; <span class="variable">i</span><span class="operator">&lt;</span><span class="variable">size</span>; <span class="variable">i</span><span class="operator">++</span>)</span>
+                <span class="code-line">        <span class="function">printf</span>(<span class="string">"%d "</span>, <span class="variable">arr</span>[<span class="variable">i</span>]);  <span class="comment">// Works fine!</span></span>
+                <span class="code-line">}</span>
+            </div>
+            <div class="danger-box">
+                <strong>Critical Trap:</strong> Inside a function, <code>sizeof(arr)</code> returns the <strong>pointer size</strong> (8 bytes on 64-bit), NOT the array size! Always pass the size as a separate parameter.
+            </div>
+            <div class="memory-array" style="margin-top: 18px; padding: 18px;">
+                <div style="text-align: center; margin-right: 18px;">
+                    <div style="color: var(--accent); margin-bottom: 8px; font-weight: bold; font-size: 0.9rem;">Main Function</div>
+                    <div style="display: flex; gap: 3px;">
+                        <div class="array-cell initialized" style="min-width: 75px; height: 55px;"><span style="font-size:1rem;font-weight:bold;">arr[0]</span></div>
+                        <div class="array-cell initialized" style="min-width: 75px; height: 55px;"><span style="font-size:1rem;font-weight:bold;">arr[1]</span></div>
+                        <div class="array-cell initialized" style="min-width: 75px; height: 55px;"><span style="font-size:1rem;font-weight:bold;">arr[2]</span></div>
+                    </div>
+                </div>
+                <div style="display: flex; align-items: center; color: #64748b; font-size: 1.8rem; padding: 0 10px;">→</div>
+                <div style="text-align: center; margin-left: 18px;">
+                    <div style="color: var(--purple); margin-bottom: 8px; font-weight: bold; font-size: 0.9rem;">Function Parameter</div>
+                    <div class="array-cell accessed" style="min-width: 90px; height: 55px;"><span style="font-size:0.9rem;font-weight:bold;">*ptr (arr[0])</span></div>
+                    <div style="font-size: 0.75rem; color: #64748b; margin-top: 5px;">Only pointer is copied,<br>not the whole array!</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SLIDE 13: Quiz -->
+        <div class="slide" data-slide="13">
+            <h2>🧩 Quiz Time!</h2>
+            <p style="margin-bottom: 22px; font-size: 1.15rem;">Test your array knowledge. Click the correct answer:</p>
+            <div style="margin-bottom: 25px;">
+                <h3 style="color: var(--text); margin-bottom: 12px;">Q1. What is the output of: <code>int arr[3] = {1,2}; printf("%d", arr[2]);</code></h3>
+                <div class="quiz-option" onclick="checkQuiz(this, false)">A. Garbage value</div>
+                <div class="quiz-option" onclick="checkQuiz(this, true)">B. 0</div>
+                <div class="quiz-option" onclick="checkQuiz(this, false)">C. 2</div>
+                <div class="quiz-option" onclick="checkQuiz(this, false)">D. Compilation error</div>
+            </div>
+            <div style="margin-bottom: 25px;">
+                <h3 style="color: var(--text); margin-bottom: 12px;">Q2. How many bytes does <code>char name[10] = "Hello";</code> allocate?</h3>
+                <div class="quiz-option" onclick="checkQuiz(this, false)">A. 5 bytes</div>
+                <div class="quiz-option" onclick="checkQuiz(this, false)">B. 6 bytes</div>
+                <div class="quiz-option" onclick="checkQuiz(this, true)">C. 10 bytes</div>
+                <div class="quiz-option" onclick="checkQuiz(this, false)">D. 11 bytes</div>
+            </div>
+            <div>
+                <h3 style="color: var(--text); margin-bottom: 12px;">Q3. What happens with <code>arr[5] = 10;</code> when <code>int arr[5];</code>?</h3>
+                <div class="quiz-option" onclick="checkQuiz(this, false)">A. Compilation error</div>
+                <div class="quiz-option" onclick="checkQuiz(this, true)">B. Undefined behavior (buffer overflow)</div>
+                <div class="quiz-option" onclick="checkQuiz(this, false)">C. Array automatically expands</div>
+                <div class="quiz-option" onclick="checkQuiz(this, false)">D. Value is stored safely</div>
+            </div>
+        </div>
+
+        <!-- SLIDE 14: Summary -->
+        <div class="slide" data-slide="14">
+            <h2>📚 Summary & Key Takeaways</h2>
+            <div class="card-grid">
+                <div class="concept-card">
+                    <h3>📝 Declaration</h3>
+                    <p><code>int arr[5];</code><br>Tells compiler about array. Memory allocated. Contains garbage if not initialized.</p>
+                </div>
+                <div class="concept-card">
+                    <h3>✨ Initialization</h3>
+                    <p><code>int arr[5] = {1,2,3,4,5};</code><br>Sets values at definition. Partial init fills rest with 0. <code>{0}</code> zeros entire array.</p>
+                </div>
+                <div class="concept-card">
+                    <h3>📐 Types</h3>
+                    <p>1D, 2D, strings (char arrays). All stored contiguously. 2D uses row-major order. Strings need <code>'\0'</code> terminator.</p>
+                </div>
+                <div class="concept-card">
+                    <h3>⚠️ Rules</h3>
+                    <p>Index 0 to size-1. No bounds checking. Fixed size. No direct assignment. Array decays to pointer in functions.</p>
+                </div>
+                <div class="concept-card">
+                    <h3>💡 Best Practices</h3>
+                    <p>Always initialize. Use <code>sizeof(arr)/sizeof(arr[0])</code> for element count. Pass size to functions. Watch for buffer overflows.</p>
+                </div>
+            </div>
+            <div class="info-box" style="margin-top: 25px; text-align: center;">
+                <h3 style="color: var(--success); margin-bottom: 12px; font-size: 1.3rem;">🎯 Remember the Golden Rules</h3>
+                <p style="font-size: 1.2rem;">1. Always <strong>initialize</strong> arrays when you define them.<br>2. Never access <strong>out of bounds</strong>.<br>3. Remember <strong>strings need +1</strong> for <code>'\0'</code>.</p>
+            </div>
+        </div>
+
+        <!-- SLIDE 15: Thank You -->
+        <div class="slide title-slide" data-slide="15">
+            <div style="font-size: 5rem; margin-bottom: 20px;">🎉</div>
+            <h1>THANK YOU</h1>
+            
+            <div style="margin-top: 30px; font-size: 0.95rem; color: #475569;">
+                Use ← → arrow keys or the navigation bar to revisit any slide
+            </div>
+        </div>
+
+    </div>
+    <!-- END slide-container -->
+
+    <!-- Navigation controls - OUTSIDE slide-container so they work! -->
+    <div class="nav-controls">
+        <button class="nav-btn" onclick="prevSlide()">◀ Previous</button>
+        <div class="slide-counter"><span id="currentSlide">1</span> / <span id="totalSlides">15</span></div>
+        <button class="nav-btn" onclick="nextSlide()">Next ▶</button>
+    </div>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('C Arrays PPT loaded successfully');
+
+        // ==================== SLIDE NAVIGATION ====================
+        let currentSlide = 1;
+        const totalSlides = 15;
+
+        function updateSlide() {
+            const slides = document.querySelectorAll('.slide');
+            slides.forEach((slide, index) => {
+                slide.classList.remove('active');
+                if (index + 1 === currentSlide) {
+                    slide.classList.add('active');
+                }
+            });
+            const currentEl = document.getElementById('currentSlide');
+            const progressEl = document.getElementById('progressBar');
+            if (currentEl) currentEl.textContent = currentSlide;
+            if (progressEl) progressEl.style.width = (currentSlide / totalSlides * 100) + '%';
+        }
+
+        window.nextSlide = function() {
+            if (currentSlide < totalSlides) { currentSlide++; updateSlide(); }
+        };
+
+        window.prevSlide = function() {
+            if (currentSlide > 1) { currentSlide--; updateSlide(); }
+        };
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight' || e.key === ' ') nextSlide();
+            if (e.key === 'ArrowLeft') prevSlide();
+        });
+
+        // Initialize
+        updateSlide();
+
+        // ==================== ARRAY VISUALIZER (SLIDE 4) ====================
+        let vizStep = 0;
+        const vizData = {
+            1: {
+                cells: Array(5).fill(null).map((_, i) => ({ 
+                    name: '', address: '0x' + (1000 + i*4).toString(16).toUpperCase(), 
+                    value: '??', type: '', status: 'FREE', cls: '' 
+                })),
+                text: '<strong>Step 1: Declaration</strong><br>We tell the compiler: "There will be an int array called <code>scores</code> with 5 elements."<br>No memory is allocated yet. It is just a promise in the compiler symbol table.',
+                code: '<span class="keyword">extern</span> <span class="type">int</span> <span class="variable">scores</span>[<span class="number">5</span>];  <span class="comment">// or just int scores[5];</span>'
+            },
+            2: {
+                cells: Array(5).fill(null).map((_, i) => ({ 
+                    name: i === 0 ? 'scores' : '', 
+                    address: '0x' + (1000 + i*4).toString(16).toUpperCase(), 
+                    value: '??', type: 'int', status: 'GARBAGE', cls: 'allocated' 
+                })),
+                text: '<strong>Step 2: Definition (Memory Allocation)</strong><br><code>int scores[5];</code> — The compiler allocates 5 x 4 = <strong>20 bytes</strong> of contiguous memory.<br>But look! Each cell shows <span style="color: #ef4444;">??</span> — that is garbage! The memory contains whatever was there before.',
+                code: '<span class="type">int</span> <span class="variable">scores</span>[<span class="number">5</span>];  <span class="comment">// 20 bytes allocated, garbage values</span>'
+            },
+            3: {
+                cells: [
+                    { name: 'scores', address: '0x3E8', value: '85', type: 'int', status: '85', cls: 'initialized' },
+                    { name: '', address: '0x3EC', value: '90', type: 'int', status: '90', cls: 'initialized' },
+                    { name: '', address: '0x3F0', value: '78', type: 'int', status: '78', cls: 'initialized' },
+                    { name: '', address: '0x3F4', value: '92', type: 'int', status: '92', cls: 'initialized' },
+                    { name: '', address: '0x3F8', value: '88', type: 'int', status: '88', cls: 'initialized' }
+                ],
+                text: '<strong>Step 3: Initialization</strong><br><code>int scores[5] = {85, 90, 78, 92, 88};</code><br>Each element now has a real value! The array is safe to use. Notice how the values are stored contiguously in memory.',
+                code: '<span class="type">int</span> <span class="variable">scores</span>[<span class="number">5</span>] <span class="operator">=</span> {<span class="number">85</span>, <span class="number">90</span>, <span class="number">78</span>, <span class="number">92</span>, <span class="number">88</span>};'
+            },
+            4: {
+                cells: [
+                    { name: 'scores', address: '0x3E8', value: '85', type: 'int', status: '85', cls: 'initialized' },
+                    { name: '', address: '0x3EC', value: '90', type: 'int', status: '90', cls: 'initialized accessed' },
+                    { name: '', address: '0x3F0', value: '78', type: 'int', status: '78', cls: 'initialized' },
+                    { name: '', address: '0x3F4', value: '92', type: 'int', status: '92', cls: 'initialized' },
+                    { name: '', address: '0x3F8', value: '88', type: 'int', status: '88', cls: 'initialized' }
+                ],
+                text: '<strong>Step 4: Accessing an Element</strong><br><code>printf("%d", scores[1]);</code> — We access index 1 (the second element).<br>The compiler calculates: <code>base_address + (1 x sizeof(int))</code> = 0x3E8 + 4 = <strong>0x3EC</strong>. Value = 90.',
+                code: '<span class="function">printf</span>(<span class="string">"%d"</span>, <span class="variable">scores</span>[<span class="number">1</span>]);  <span class="comment">// Output: 90</span>'
+            },
+            5: {
+                cells: [
+                    { name: 'scores', address: '0x3E8', value: '85', type: 'int', status: '85', cls: 'initialized' },
+                    { name: '', address: '0x3EC', value: '95', type: 'int', status: '95', cls: 'initialized modified' },
+                    { name: '', address: '0x3F0', value: '78', type: 'int', status: '78', cls: 'initialized' },
+                    { name: '', address: '0x3F4', value: '92', type: 'int', status: '92', cls: 'initialized' },
+                    { name: '', address: '0x3F8', value: '88', type: 'int', status: '88', cls: 'initialized' }
+                ],
+                text: '<strong>Step 5: Modifying an Element</strong><br><code>scores[1] = 95;</code> — We change the value at index 1.<br>The memory at address 0x3EC is overwritten with the new value 95. Other elements remain unchanged!',
+                code: '<span class="variable">scores</span>[<span class="number">1</span>] <span class="operator">=</span> <span class="number">95</span>;  <span class="comment">// scores[1] now contains 95</span>'
+            }
+        };
+
+        function renderArrayViz(cells) {
+            const viz = document.getElementById('arrayViz');
+            const addrBar = document.getElementById('addressBar');
+            if (!viz) return;
+            viz.innerHTML = '';
+            addrBar.innerHTML = '';
+
+            cells.forEach((cell, i) => {
+                const cellDiv = document.createElement('div');
+                cellDiv.className = 'array-cell ' + cell.cls;
+                cellDiv.innerHTML = 
+                    (cell.name ? '<span style="position:absolute;top:-28px;font-size:0.8rem;color:#10b981;font-weight:bold;white-space:nowrap;">' + cell.name + '</span>' : '') +
+                    '<span class="cell-index">[' + i + ']</span>' +
+                    '<span class="cell-address">' + cell.address + '</span>' +
+                    '<span class="cell-value ' + (cell.value === '??' ? 'garbage' : '') + '">' + cell.value + '</span>' +
+                    '<span class="cell-type">' + cell.type + '</span>';
+                viz.appendChild(cellDiv);
+
+                const addrDiv = document.createElement('div');
+                addrDiv.className = 'address-label';
+                addrDiv.textContent = cell.address;
+                addrBar.appendChild(addrDiv);
+            });
+        }
+
+        function updateVizDots(step) {
+            for (let i = 1; i <= 5; i++) {
+                const dot = document.getElementById('vstep' + i);
+                if (!dot) continue;
+                dot.classList.remove('active', 'completed');
+                if (i < step) dot.classList.add('completed');
+                else if (i === step) dot.classList.add('active');
+            }
+        }
+
+        window.vizDeclare = function() { vizStep = 1; renderArrayViz(vizData[1].cells); updateVizDots(1); updateVizText(1); };
+        window.vizDefine = function() { vizStep = 2; renderArrayViz(vizData[2].cells); updateVizDots(2); updateVizText(2); };
+        window.vizInit = function() { vizStep = 3; renderArrayViz(vizData[3].cells); updateVizDots(3); updateVizText(3); };
+        window.vizAccess = function() { vizStep = 4; renderArrayViz(vizData[4].cells); updateVizDots(4); updateVizText(4); };
+        window.vizModify = function() { vizStep = 5; renderArrayViz(vizData[5].cells); updateVizDots(5); updateVizText(5); };
+        window.vizReset = function() { 
+            vizStep = 0; 
+            const av = document.getElementById('arrayViz');
+            const ab = document.getElementById('addressBar');
+            const ve = document.getElementById('vizExplanation');
+            const vc = document.getElementById('vizCode');
+            if (av) av.innerHTML = '<div style="color:#64748b;padding:40px;">Click a step above to visualize the array lifecycle</div>'; 
+            if (ab) ab.innerHTML = ''; 
+            updateVizDots(0); 
+            if (ve) ve.innerHTML = '<strong>Interactive Array Visualizer:</strong> Click the buttons to step through the array lifecycle!'; 
+            if (vc) vc.innerHTML = 'Click a step above to see the array come alive!'; 
+        };
+
+        function updateVizText(step) {
+            const ve = document.getElementById('vizExplanation');
+            const vc = document.getElementById('vizCode');
+            if (ve) ve.innerHTML = vizData[step].text;
+            if (vc) vc.innerHTML = '<div class="code-block" style="margin:0;padding:10px;font-size:0.9rem;display:inline-block;">' + vizData[step].code + '</div>';
+        }
+
+        // ==================== PLAYGROUND (SLIDE 10) ====================
+        let playgroundValues = Array(5).fill('??');
+        let playgroundSize = 5;
+
+        function renderPlayground() {
+            const viz = document.getElementById('playgroundViz');
+            const addrBar = document.getElementById('playgroundAddress');
+            if (!viz) return;
+            viz.innerHTML = '';
+            if (addrBar) addrBar.innerHTML = '';
+            const baseAddr = 0x2000;
+
+            for (let i = 0; i < playgroundSize; i++) {
+                const cellDiv = document.createElement('div');
+                const val = playgroundValues[i];
+                const isGarbage = val === '??';
+                cellDiv.className = 'array-cell ' + (isGarbage ? '' : 'initialized');
+                cellDiv.innerHTML = 
+                    '<span class="cell-index">[' + i + ']</span>' +
+                    '<span class="cell-address">0x' + (baseAddr + i*4).toString(16).toUpperCase() + '</span>' +
+                    '<span class="cell-value ' + (isGarbage ? 'garbage' : '') + '">' + val + '</span>' +
+                    '<span class="cell-type">int</span>';
+                viz.appendChild(cellDiv);
+
+                if (addrBar) {
+                    const addrDiv = document.createElement('div');
+                    addrDiv.className = 'address-label';
+                    addrDiv.textContent = '0x' + (baseAddr + i*4).toString(16).toUpperCase();
+                    addrBar.appendChild(addrDiv);
+                }
+            }
+        }
+
+        window.updatePlayground = function() {
+            const sizeEl = document.getElementById('playgroundSize');
+            playgroundSize = sizeEl ? parseInt(sizeEl.value) || 5 : 5;
+            playgroundValues = Array(playgroundSize).fill('??');
+            renderPlayground();
+            const pe = document.getElementById('playgroundExplanation');
+            if (pe) pe.textContent = 'Array of size ' + playgroundSize + ' created. Click Initialize to set values!';
+        };
+
+        window.playgroundInit = function() {
+            playgroundValues = Array.from({length: playgroundSize}, (_, i) => (i + 1) * 10);
+            renderPlayground();
+            const pe = document.getElementById('playgroundExplanation');
+            if (pe) pe.innerHTML = '<strong>Initialized:</strong> Array filled with sequential values {10, 20, 30, ...} using initialization syntax.';
+        };
+
+        window.playgroundRandom = function() {
+            playgroundValues = Array.from({length: playgroundSize}, () => Math.floor(Math.random() * 100));
+            renderPlayground();
+            const pe = document.getElementById('playgroundExplanation');
+            if (pe) pe.innerHTML = '<strong>Random Values:</strong> Each element gets a random value between 0-99. This simulates reading data from a sensor or user input.';
+        };
+
+        window.playgroundZero = function() {
+            playgroundValues = Array(playgroundSize).fill(0);
+            renderPlayground();
+            const pe = document.getElementById('playgroundExplanation');
+            if (pe) pe.innerHTML = '<strong>All Zeros:</strong> Every element is set to 0. This is the safest initialization method: <code>int arr[5] = {0};</code>';
+        };
+
+        window.playgroundAccess = function() {
+            if (playgroundSize < 3) {
+                const pe = document.getElementById('playgroundExplanation');
+                if (pe) pe.innerHTML = '<span style="color:#ef4444;">Array too small! Increase size to at least 3.</span>';
+                return;
+            }
+            renderPlayground();
+            const cells = document.getElementById('playgroundViz').children;
+            if (cells[2]) {
+                cells[2].classList.add('accessed');
+                setTimeout(() => cells[2].classList.remove('accessed'), 1500);
+            }
+            const pe = document.getElementById('playgroundExplanation');
+            if (pe) pe.innerHTML = '<strong>Access:</strong> <code>arr[2]</code> = <strong>' + playgroundValues[2] + '</strong>. The compiler calculates address: base + (2 x 4) = base + 8 bytes.';
+        };
+
+        window.playgroundModify = function() {
+            if (playgroundSize < 3) return;
+            playgroundValues[2] = 99;
+            renderPlayground();
+            const cells = document.getElementById('playgroundViz').children;
+            if (cells[2]) {
+                cells[2].classList.add('modified');
+                setTimeout(() => cells[2].classList.remove('modified'), 1500);
+            }
+            const pe = document.getElementById('playgroundExplanation');
+            if (pe) pe.innerHTML = '<strong>Modified:</strong> <code>arr[2] = 99;</code> — Only index 2 changed. All other elements remain the same! This is direct memory manipulation.';
+        };
+
+        // ==================== QUIZ (SLIDE 13) ====================
+        window.checkQuiz = function(element, isCorrect) {
+            const parent = element.parentElement;
+            const options = parent.querySelectorAll('.quiz-option');
+            options.forEach(opt => {
+                opt.classList.remove('correct', 'wrong');
+                opt.onclick = null;
+            });
+            if (isCorrect) {
+                element.classList.add('correct');
+            } else {
+                element.classList.add('wrong');
+                options.forEach(opt => {
+                    const onclick = opt.getAttribute('onclick');
+                    if (onclick && onclick.includes('true')) opt.classList.add('correct');
+                });
+            }
+        };
+
+        // Initialize visualizers
+        vizReset();
+        renderPlayground();
+
+        console.log('All functions initialized successfully');
+    });
+    </script>
+</body>
+</html>
